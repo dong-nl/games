@@ -10,6 +10,8 @@ function PlayState:enter(params)
 	self.bricks = params.bricks
 	self.health = params.health
 	self.score = params.score
+	self.level = params.level
+	self.highScores = params.highScores
 end
 
 function PlayState:update(dt)
@@ -47,6 +49,19 @@ function PlayState:update(dt)
 			brick:hit()
 			self.score = self.score + brick.tier * 200 + brick.color * 25
 
+			if self:checkVictory() then
+				gSounds['victory']:play()
+
+				gStateMachine:change('victory',{
+					paddle = self.paddle,
+					ball = self.ball,
+					health = self.health,
+					score = self.score,
+					level = self.level,
+					highScores = self.highScores
+				})
+			end
+
 			if self.ball.x + 2 < brick.x and self.ball.dx > 0 then
 				self.ball.dx = -self.ball.dx
 				self.ball.x = brick.x - 8
@@ -72,16 +87,23 @@ function PlayState:update(dt)
 
 		if self.health == 0 then
 			gStateMachine:change('game-over',{
-				score = self.score
+				score = self.score,
+				highScores = self.highScores
 			})
 		else
 			gStateMachine:change('serve',{
 				paddle = self.paddle,
 				bricks = self.bricks,
 				health = self.health,
-				score = self.score
+				score = self.score,
+				level = self.level,
+				highScores = self.highScores
 			})
 		end
+	end
+
+	for k,brick in pairs(self.bricks) do
+		brick:update(dt)
 	end
 
 	if love.keyboard.wasPressed('escape') then
@@ -97,6 +119,10 @@ function PlayState:render()
 		brick:render()
 	end
 
+	for k,brick in pairs(self.bricks) do
+		brick:renderParticle()
+	end
+
 	renderHealth(self.health)
 	renderScore(self.score)
 
@@ -104,4 +130,13 @@ function PlayState:render()
 		love.graphics.setFont(gFonts['large'])
 		love.graphics.printf('PAUSE',0,VIRTUAL_HEIGHT / 2 - 16,VIRTUAL_WIDTH,'center')
 	end
+end
+
+function PlayState:checkVictory()
+	for k,brick in pairs(self.bricks) do
+		if brick.inPlay then
+			return false
+		end
+	end
+	return true
 end

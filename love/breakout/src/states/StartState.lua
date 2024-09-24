@@ -2,6 +2,10 @@ StartState = Class{__includes = BaseState}
 
 local heighLighed = 1
 
+function StartState:enter(params)
+	self.highScores = params.highScores
+end
+
 function StartState:update()
 	if love.keyboard.wasPressed('escape') then
 		love.event.quit()
@@ -15,11 +19,12 @@ function StartState:update()
 	if love.keyboard.wasPressed('enter') or love.keyboard.wasPressed('return') then
 		if heighLighed == 1 then
 			gSounds['confirm']:play()
-			gStateMachine:change('serve',{
-				paddle = Paddle(1),
-				bricks = LevelMaker.createMap(1),
-				health = 3,
-				score = 0
+			gStateMachine:change('paddle-select',{				
+				highScores = self.highScores
+			})
+		else
+			gStateMachine:change('high-scores',{
+				highScores = self.highScores
 			})
 		end
 	end
